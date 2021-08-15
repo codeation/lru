@@ -38,7 +38,7 @@ func main() {
 }
 ```
 
-First parameter of cache.Get func is a key (filename in this case). The second parameter is a func to get the value for the specified key and error. The func type declaration must be the same as readFileContent in the example. The third parameter is a pointer to a variable to set the value. 
+First parameter of cache.Get func is a key (filename in this case). The second parameter is a func to get the value for the specified key and error. The func type declaration must be the same as readFileContent in the example. The third parameter is a pointer to a variable to set the value.
 
 An error is returned when the function returns an error. An error is also returned if the return value of the function cannot be assigned to the variable.
 

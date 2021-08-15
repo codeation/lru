@@ -1,4 +1,4 @@
-// Package lru implements asynchronous LRU cache
+// Package lru implements asynchronous LRU cache.
 package lru
 
 import (
@@ -15,7 +15,7 @@ type pair struct {
 	elem  *list.Element
 }
 
-// Cache is a LRU cache
+// Cache is a LRU cache.
 type Cache struct {
 	values  map[string]*pair
 	mutex   sync.Mutex
