@@ -1,5 +1,8 @@
 # lru
-A lru is an asynchronous LRU cache. 
+
+A lru is an asynchronous LRU cache.
+
+This package is moving into maintenance mode. See https://github.com/hashicorp/golang-lru for LRUs with Go generics.
 
 [![GoDoc](https://godoc.org/github.com/codeation/lru?status.svg)](https://godoc.org/github.com/codeation/lru)
 
