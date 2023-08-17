@@ -1,8 +1,6 @@
 # lru
 
-A lru is an asynchronous LRU cache.
-
-This package is moving into maintenance mode. See https://github.com/hashicorp/golang-lru for LRUs with Go generics.
+A lru is an asynchronous LRU cache (generic version).
 
 [![GoDoc](https://godoc.org/github.com/codeation/lru?status.svg)](https://godoc.org/github.com/codeation/lru)
 
@@ -18,22 +16,23 @@ For example, caching the output of the ioutil.ReadFile function to reduce disk I
 package main
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/codeation/lru"
 )
 
-func readFileContent(key string) (interface{}, error) {
-	log.Printf("read once\n")
-	return ioutil.ReadFile(key)
+func readFileContent(key string) ([]byte, error) {
+	log.Println("read once")
+	return os.ReadFile(key)
 }
 
 func main() {
-	cache := lru.NewCache(1024)
+	cache := lru.NewCache(1024, readFileContent)
 	for i := 0; i < 10; i++ {
 		var data []byte
-		if err := cache.Get("input.txt", readFileContent, &data); err != nil {
+		data, err := cache.Get("input.txt")
+		if err != nil {
 			log.Fatal(err)
 		}
 		log.Printf("file size is %d\n", len(data))
@@ -41,8 +40,8 @@ func main() {
 }
 ```
 
-First parameter of cache.Get func is a key (filename in this case). The second parameter is a func to get the value for the specified key and error. The func type declaration must be the same as readFileContent in the example. The third parameter is a pointer to a variable to set the value.
+The lru.NewCache parameter is the number of cache items until the last used item is removed from the cache. The second parameter is a func to get the value for the specified key and error.
 
-An error is returned when the function returns an error. An error is also returned if the return value of the function cannot be assigned to the variable.
+The parameter of cache.Get func is a key (filename in this case).
 
-The lru.NewCache parameter is the number of cache items until the last used item is removed from the cache.
+An error is returned when the function returns an error.

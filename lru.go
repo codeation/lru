@@ -3,76 +3,71 @@ package lru
 
 import (
 	"container/list"
-	"fmt"
-	"reflect"
 	"sync"
 )
 
-type pair struct {
+type pair[V any] struct {
 	once  *sync.Once
-	value interface{}
+	value V
 	err   error
 	elem  *list.Element
 }
 
 // Cache is a LRU cache.
-type Cache struct {
-	values  map[string]*pair
-	mutex   sync.Mutex
-	maxSize int
-	list    *list.List
+type Cache[K comparable, V any] struct {
+	values   map[K]*pair[V]
+	mutex    sync.Mutex
+	capacity int
+	keys     *list.List
+	f        func(K) (V, error)
 }
 
-// NewCache creates an LRU cache with the specified size.
-func NewCache(maxSize int) *Cache {
-	return &Cache{
-		values:  map[string]*pair{},
-		maxSize: maxSize,
-		list:    list.New(),
+// NewCache creates an LRU cache with the specified capacity;
+// f - function to get value by key, which is called if there is no value in the cache
+func NewCache[K comparable, V any](capacity int, f func(K) (V, error)) *Cache[K, V] {
+	return &Cache[K, V]{
+		values:   make(map[K]*pair[V], capacity),
+		capacity: capacity,
+		keys:     list.New(),
+		f:        f,
 	}
 }
 
 // Reset resets cache contents.
-func (c *Cache) Reset() error {
+func (c *Cache[K, V]) Reset() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	c.values = map[string]*pair{}
-	c.list.Init()
+	c.values = make(map[K]*pair[V], c.capacity)
+	c.keys.Init()
 	return nil
 }
 
 // Get returns the cached value for the key, or waits until f returns a value.
-func (c *Cache) Get(key string, f func(key string) (interface{}, error), value interface{}) error {
+func (c *Cache[K, V]) Get(key K) (V, error) {
 	c.mutex.Lock()
 	p, ok := c.values[key]
 	if ok {
-		c.list.MoveToFront(p.elem)
+		c.keys.MoveToFront(p.elem)
 	} else {
-		for c.list.Len() >= c.maxSize {
-			e := c.list.Back()
-			delete(c.values, e.Value.(string))
-			c.list.Remove(e)
+		for c.keys.Len() >= c.capacity {
+			e := c.keys.Back()
+			delete(c.values, e.Value.(K))
+			c.keys.Remove(e)
 		}
-		p = &pair{
+		p = &pair[V]{
 			once: new(sync.Once),
-			elem: c.list.PushFront(key),
+			elem: c.keys.PushFront(key),
 		}
 		c.values[key] = p
 	}
 	c.mutex.Unlock()
 	p.once.Do(func() {
-		p.value, p.err = f(key)
+		p.value, p.err = c.f(key)
+		if p.err != nil {
+			c.mutex.Lock()
+			p.once = new(sync.Once)
+			c.mutex.Unlock()
+		}
 	})
-	if p.err != nil {
-		return p.err
-	}
-	v := reflect.ValueOf(value)
-	if v.Kind() != reflect.Ptr || v.IsNil() {
-		return fmt.Errorf("value must be a non-nil pointer")
-	}
-	if !reflect.TypeOf(p.value).AssignableTo(v.Elem().Type()) {
-		return fmt.Errorf("value must be a %T pointer", p.value)
-	}
-	v.Elem().Set(reflect.ValueOf(p.value))
-	return nil
+	return p.value, p.err
 }
