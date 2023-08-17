@@ -42,6 +42,4 @@ func main() {
 
 The lru.NewCache parameter is the number of cache items until the last used item is removed from the cache. The second parameter is a func to get the value for the specified key and error.
 
-The parameter of cache.Get func is a key (filename in this case).
-
-An error is returned when the function returns an error.
+The parameter of cache.Get func is a key (filename in this case). An error is returned when the function returns an error.
