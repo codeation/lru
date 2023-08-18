@@ -30,7 +30,6 @@ func readFileContent(key string) ([]byte, error) {
 func main() {
 	cache := lru.NewCache(1024, readFileContent)
 	for i := 0; i < 10; i++ {
-		var data []byte
 		data, err := cache.Get("input.txt")
 		if err != nil {
 			log.Fatal(err)
