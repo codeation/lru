@@ -22,8 +22,9 @@ type Cache[K comparable, V any] struct {
 	f        func(K) (V, error)
 }
 
-// NewCache creates an LRU cache with the specified capacity;
-// f - function to get value by key, which is called if there is no value in the cache
+// NewCache creates an LRU cache with the specified capacity.
+// f is a callback function for getting a value by key, which is called if there is no value in the cache.
+// The callback function will be called once for concurrent Get requests with the same key.
 func NewCache[K comparable, V any](capacity int, f func(K) (V, error)) *Cache[K, V] {
 	return &Cache[K, V]{
 		keys:     list.New(),
@@ -34,15 +35,14 @@ func NewCache[K comparable, V any](capacity int, f func(K) (V, error)) *Cache[K,
 }
 
 // Reset resets cache contents.
-func (c *Cache[K, V]) Reset() error {
+func (c *Cache[K, V]) Reset() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.keys.Init()
 	c.values = make(map[K]*pair[V], c.capacity)
-	return nil
 }
 
-// Get returns the cached value for the key, or waits until f returns a value.
+// Get returns the cached value for the key, or waits for the callback function to return a value.
 func (c *Cache[K, V]) Get(key K) (V, error) {
 	c.mutex.Lock()
 	p, ok := c.values[key]
