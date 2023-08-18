@@ -7,7 +7,7 @@ import (
 )
 
 type pair[V any] struct {
-	once    *sync.Once
+	once    sync.Once
 	keyElem *list.Element
 	value   V
 	err     error
@@ -55,7 +55,6 @@ func (c *Cache[K, V]) Get(key K) (V, error) {
 			delete(c.values, keyElem.Value.(K))
 		}
 		p = &pair[V]{
-			once:    new(sync.Once),
 			keyElem: c.keys.PushFront(key),
 		}
 		c.values[key] = p
