@@ -28,7 +28,7 @@ func readFileContent(key string) ([]byte, error) {
 }
 
 func main() {
-	cache := lru.NewCache(1024, readFileContent)
+	cache := lru.NewSyncLRU(1024, readFileContent)
 	for i := 0; i < 10; i++ {
 		data, err := cache.Get("input.txt")
 		if err != nil {
@@ -39,6 +39,6 @@ func main() {
 }
 ```
 
-The lru.NewCache parameter is the number of cache items until the last used item is removed from the cache. The second parameter is a func to get the value for the specified key and error.
+The lru.NewSyncLRU parameter is the number of cache items until the last used item is removed from the cache. The second parameter is a func to get the value for the specified key and error.
 
 The parameter of cache.Get func is a key (filename in this case). An error is returned when the function returns an error.
