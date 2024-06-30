@@ -28,7 +28,7 @@ func TestCacheHit(t *testing.T) {
 	}} {
 		t.Run(tt.title, func(t *testing.T) {
 			funcKey := ""
-			cache := NewCache(4, func(key string) (int, error) {
+			cache := NewSyncLRU(4, func(key string) (int, error) {
 				funcKey = key
 				return 42, nil
 			})
@@ -86,14 +86,14 @@ func TestCacheOrder(t *testing.T) {
 		expected: "ACFG",
 	}} {
 		t.Run(tt.title, func(t *testing.T) {
-			cache := NewCache(4, func(r rune) (int, error) { return 42, nil })
+			cache := NewSyncLRU(4, func(r rune) (int, error) { return 42, nil })
 			for _, r := range tt.keys {
 				_, _ = cache.Get(r)
 			}
 
 			output := ""
-			for e := cache.keys.Back(); e != nil; e = e.Prev() {
-				output += string(e.Value.(rune))
+			for e := cache.queue.Back(); e != nil; e = e.Prev() {
+				output += string(e.Value.(*oncePair[rune, int]).key)
 			}
 
 			if output != tt.expected {
